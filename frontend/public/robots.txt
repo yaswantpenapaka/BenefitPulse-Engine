@@ -1,0 +1,6 @@
+# BenefitPulse Engine — public SPA
+User-agent: *
+Allow: /
+
+# Prefer the project homepage for discovery
+Sitemap: https://github.com/yaswantpenapaka/BenefitPulse-Engine

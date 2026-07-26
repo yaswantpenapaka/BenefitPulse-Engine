@@ -1,0 +1,107 @@
+# =============================================================================
+# BenefitPulse Engine — keep the repo lean (source + README only)
+# =============================================================================
+
+# --- Secrets & local env ---
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+*.pem
+*.key
+secrets.md
+credentials*
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+backend/.venv/
+*.egg-info/
+.eggs/
+dist/
+build/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+*.egg
+
+# --- Node / frontend ---
+node_modules/
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+*.tsbuildinfo
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-lock.yaml
+# keep package-lock.json tracked for reproducible installs
+
+# --- Runtime data (regenerated locally) ---
+backend/data/*
+!backend/data/.gitkeep
+
+# --- IDE / editors ---
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+
+# --- OS junk ---
+.DS_Store
+.DS_Store?
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# --- Logs & temp ---
+*.log
+logs/
+tmp/
+temp/
+*.tmp
+*.temp
+*.bak
+*.cache
+
+# --- Local media / non-code assets (not for the public repo) ---
+*.jpeg
+*.jpg
+*.png
+!frontend/public/**
+!frontend/src/assets/**
+*.pdf
+*.pptx
+*.ppt
+*.mp4
+*.mov
+WhatsApp*
+
+# --- Spec / internal docs (code + README only) ---
+docs/
+SETUP_CLOUD.md
+PROTOTYPE_SPEC.*
+slide-previews/
+grok_report*
+
+# --- Misc tooling ---
+.turbo/
+.vercel/
+.netlify/
+.fly/
+*.local
