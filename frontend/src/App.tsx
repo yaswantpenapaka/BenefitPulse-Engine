@@ -12,6 +12,9 @@ import { Layout } from '@/components/Layout'
 import { LoginPage } from '@/pages/LoginPage'
 import { SignupPage } from '@/pages/SignupPage'
 import { DashboardPage } from '@/pages/DashboardPage'
+import { BenefitsPage } from '@/pages/BenefitsPage'
+import { TransactionsPage } from '@/pages/TransactionsPage'
+import { SimulatePage } from '@/pages/SimulatePage'
 import { ClaimReviewPage } from '@/pages/ClaimReviewPage'
 import { CardsPage } from '@/pages/CardsPage'
 import { ProfilePage } from '@/pages/ProfilePage'
@@ -29,7 +32,10 @@ const queryClient = new QueryClient({
 const PAGE_TITLES: Record<string, string> = {
   '/login': 'Sign in | BenefitPulse',
   '/signup': 'Create account | BenefitPulse',
-  '/dashboard': 'Dashboard | BenefitPulse',
+  '/dashboard': 'Overview | BenefitPulse',
+  '/benefits': 'Benefits | BenefitPulse',
+  '/transactions': 'Transactions | BenefitPulse',
+  '/simulate': 'Simulate | BenefitPulse',
   '/cards': 'Your cards | BenefitPulse',
   '/profile': 'Profile | BenefitPulse',
 }
@@ -71,6 +77,9 @@ export default function App() {
               }
             >
               <Route path="/dashboard" element={<DashboardPage />} />
+              <Route path="/benefits" element={<BenefitsPage />} />
+              <Route path="/transactions" element={<TransactionsPage />} />
+              <Route path="/simulate" element={<SimulatePage />} />
               <Route path="/claims/:benefitId" element={<ClaimReviewPage />} />
               <Route path="/cards" element={<CardsPage />} />
               <Route path="/profile" element={<ProfilePage />} />

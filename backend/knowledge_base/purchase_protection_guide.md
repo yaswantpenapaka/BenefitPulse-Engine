@@ -9,8 +9,8 @@ Purchase Protection is a complimentary benefit available on eligible American Ex
 - Claims must be filed within **90 days** of the incident (damage or theft).
 
 ## Eligible Cards
-- American Express Platinum Card
-- American Express Gold Card
+- The Platinum Card®
+- American Express® Gold Card
 - American Express SmartEarn Credit Card (select regions)
 - Centurion Card
 

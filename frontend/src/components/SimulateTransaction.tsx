@@ -104,9 +104,9 @@ function ResultPanel({ result }: { result: PipelineResult }) {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex items-center gap-2">
           {eligible ? (
-            <CheckCircle2 className="h-5 w-5 text-emerald-400" />
+            <CheckCircle2 className="h-5 w-5 text-emerald-700" />
           ) : (
-            <XCircle className="h-5 w-5 text-amber-400" />
+            <XCircle className="h-5 w-5 text-amber-700" />
           )}
           <div>
             <div className="font-semibold">
@@ -176,14 +176,15 @@ function ResultPanel({ result }: { result: PipelineResult }) {
       )}
 
       {llm && (
-        <div className="text-xs text-muted-foreground flex flex-wrap gap-x-4 gap-y-1 border-t border-border/50 pt-3">
+        <div className="text-xs text-foreground/80 flex flex-wrap gap-x-4 gap-y-1 border-t border-border pt-3">
           <span>
             LLM: {llm.calls_succeeded ?? 0}/{llm.calls_attempted ?? 0} Gemini calls succeeded
           </span>
           {llm.gemini_model && <span>Model: {llm.gemini_model}</span>}
           {result.policy_chunks && result.policy_chunks.length > 0 && (
-            <span>
-              RAG: {result.policy_chunks.map((c) => c.source).filter(Boolean).join(', ')}
+            <span className="text-emerald-900 font-medium">
+              ChromaDB RAG:{' '}
+              {result.policy_chunks.map((c) => c.source).filter(Boolean).join(', ')}
             </span>
           )}
         </div>
@@ -247,8 +248,8 @@ export function SimulateTransaction() {
               Live transaction simulator
             </CardTitle>
             <CardDescription className="mt-1.5 max-w-2xl">
-              Drop in a charge and watch the pipeline run — normalize the merchant, match policy,
-              score confidence, pre-fill a claim. Uses Gemini when a key is set; otherwise rules only.
+              Drop in a charge and watch the pipeline run — normalize the merchant, match policy via
+              ChromaDB RAG, score confidence, and pre-fill a claim.
             </CardDescription>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -260,23 +261,34 @@ export function SimulateTransaction() {
             ) : (
               <Badge variant="secondary" className="gap-1">
                 <ShieldAlert className="h-3 w-3" />
-                Rule fallback
+                Rules engine
               </Badge>
             )}
             {sys?.rag?.backend === 'chromadb' ? (
-              <Badge variant="default" className="gap-1 bg-emerald-700 hover:bg-emerald-700">
+              <Badge
+                variant="outline"
+                className="gap-1 border-emerald-600 bg-emerald-50 text-emerald-900 font-medium"
+              >
                 ChromaDB RAG
               </Badge>
             ) : (
-              <Badge variant="secondary">Keyword RAG</Badge>
+              <Badge variant="secondary" className="text-foreground">
+                Keyword RAG
+              </Badge>
             )}
-            {sys?.data_backend === 'supabase' ? (
-              <Badge variant="outline">Postgres cloud</Badge>
-            ) : (
-              <Badge variant="outline">Local demo DB</Badge>
+            {sys?.data_backend === 'supabase' && (
+              <Badge
+                variant="outline"
+                className="border-stone-400 bg-stone-50 text-stone-800 font-medium"
+              >
+                Supabase
+              </Badge>
             )}
             {health?.gemini_model && (
-              <Badge variant="outline" className="font-mono text-[10px]">
+              <Badge
+                variant="outline"
+                className="font-mono text-[10px] border-border bg-card text-foreground"
+              >
                 {health.gemini_model}
               </Badge>
             )}
@@ -286,7 +298,7 @@ export function SimulateTransaction() {
       <CardContent className="space-y-5">
         <div>
           <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-2">
-            Quick demos
+            Sample scenarios
           </div>
           <div className="flex flex-wrap gap-2">
             {PRESETS.map((p) => (
@@ -359,7 +371,7 @@ export function SimulateTransaction() {
         </form>
 
         {inject.isError && (
-          <div className="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-red-300">
+          <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
             {inject.error instanceof Error ? inject.error.message : 'Simulation failed'}
           </div>
         )}

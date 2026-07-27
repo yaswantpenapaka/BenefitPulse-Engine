@@ -9,8 +9,8 @@ Extended Warranty doubles the original manufacturer’s warranty period (up to a
 - Benefit applies only after the manufacturer’s warranty has expired.
 
 ## Eligible Cards
-- American Express Platinum Card
-- American Express Gold Card
+- The Platinum Card®
+- American Express® Gold Card
 - Select American Express Credit Cards
 
 ## Eligible Products

@@ -1,3 +1,3 @@
-from .demo_store import DemoStore, get_demo_store
+from .store import get_store, get_store_kind, system_status
 
-__all__ = ["DemoStore", "get_demo_store"]
+__all__ = ["get_store", "get_store_kind", "system_status"]

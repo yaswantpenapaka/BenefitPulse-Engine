@@ -144,7 +144,7 @@ def _fallback_reply(
             )
         else:
             lines.append(
-                "Eligible items purchased with an American Express Platinum Card may qualify "
+                "Eligible items purchased with The Platinum Card® or the American Express® Gold Card may qualify "
                 "for Purchase Protection (90 days), Return Protection, Travel Delay Insurance, "
                 "or Extended Warranty depending on category."
             )

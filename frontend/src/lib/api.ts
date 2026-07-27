@@ -70,6 +70,9 @@ export type DashboardData = {
     cards_count: number
     transactions_count: number
     active_benefits: number
+    claim_eligible?: number
+    outside_coverage?: number
+    reviewed_charges?: number
     submitted_claims: number
     potential_coverage: number
   }
@@ -190,9 +193,6 @@ export const api = {
       body: JSON.stringify({ email, password, full_name }),
     }),
 
-  demoCredentials: () =>
-    request<{ email: string; password: string; note: string }>('/api/auth/demo-credentials'),
-
   dashboard: () => request<DashboardData>('/api/dashboard'),
   cards: () => request<Card[]>('/api/cards'),
   transactions: () => request<Transaction[]>('/api/transactions'),
@@ -210,7 +210,6 @@ export const api = {
   health: () =>
     request<{
       status: string
-      demo_mode?: boolean
       data_backend?: string
       gemini_configured?: boolean
       gemini_model?: string | null
@@ -226,7 +225,6 @@ export const api = {
   systemStatus: () =>
     request<{
       data_backend?: string
-      demo_mode?: boolean
       gemini?: { configured?: boolean; model?: string | null }
       rag?: {
         backend?: string

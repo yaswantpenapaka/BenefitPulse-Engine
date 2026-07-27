@@ -9,8 +9,8 @@ Travel Delay Insurance provides reimbursement for reasonable additional expenses
 - Claim must be filed within **30 days** of the delay incident (or as specified in your Card’s terms).
 
 ## Eligible Cards
-- American Express Platinum Card
-- American Express Gold Card (select markets)
+- The Platinum Card®
+- American Express® Gold Card (select markets)
 - Centurion Card
 
 ## What Triggers Coverage

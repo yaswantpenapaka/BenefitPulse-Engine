@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import logging
 from contextlib import asynccontextmanager
-from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -31,24 +30,17 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     settings = get_settings()
+    settings.validate_required()
     logger.info(
-        "Starting %s (demo_mode=%s, use_supabase_primary=%s)",
+        "Starting %s (data=supabase, gemini=%s)",
         settings.app_name,
-        settings.demo_mode,
-        settings.use_supabase_primary,
+        settings.gemini_model,
     )
 
-    # Operational store
     store = get_store()
     logger.info("Operational store: %s", get_store_kind())
-    if get_store_kind() == "demo" and hasattr(store, "data"):
-        logger.info(
-            "Demo store ready – users=%d, benefits=%d",
-            len(store.data.get("users", [])),
-            len(store.data.get("detected_benefits", [])),
-        )
+    _ = store  # ensure initialized
 
-    # RAG knowledge base (ChromaDB + Gemini embeddings when available)
     try:
         vs = get_vector_store()
         st = vs.status()
@@ -59,7 +51,8 @@ async def lifespan(app: FastAPI):
             st.get("embedding_mode"),
         )
     except Exception as e:
-        logger.warning("Vector store init issue: %s", e)
+        logger.error("Vector store init failed: %s", e)
+        raise
 
     yield
     logger.info("Shutting down")
@@ -67,9 +60,15 @@ async def lifespan(app: FastAPI):
 
 def create_app() -> FastAPI:
     settings = get_settings()
+    # Fail fast at import/start if credentials are missing
+    settings.validate_required()
+
     app = FastAPI(
         title=settings.app_name,
-        description="Detect unused card protections, pre-fill claims, and answer policy questions",
+        description=(
+            "Detect unused card protections, pre-fill claims, and answer policy questions. "
+            "Requires Supabase (Postgres + Auth) and Google Gemini API credentials."
+        ),
         version="1.0.0",
         lifespan=lifespan,
     )
@@ -88,7 +87,6 @@ def create_app() -> FastAPI:
     app.include_router(claims_router, prefix="/api")
     app.include_router(assistant_router, prefix="/api")
 
-    # Static uploads
     upload_dir = BASE_DIR / "data" / "uploads"
     upload_dir.mkdir(parents=True, exist_ok=True)
     app.mount("/uploads", StaticFiles(directory=str(upload_dir)), name="uploads")
@@ -99,23 +97,22 @@ def create_app() -> FastAPI:
         return {
             "status": "ok",
             "app": settings.app_name,
-            "demo_mode": settings.demo_mode,
-            "data_backend": status.get("data_backend"),
+            "data_backend": "supabase",
             "gemini_configured": settings.has_gemini,
-            "gemini_model": settings.gemini_model if settings.has_gemini else None,
+            "gemini_model": settings.gemini_model,
             "supabase_configured": settings.has_supabase,
             "rag": status.get("rag"),
-            "agents": "gemini_live" if settings.has_gemini else "rule_fallback",
+            "agents": "gemini_live",
         }
 
     @app.get("/api/system/status")
     def api_system_status():
-        """Full stack status for the live demo UI (architecture checklist)."""
+        """Full stack status for ops / architecture checklist."""
         return system_status()
 
     @app.post("/api/system/reindex-rag")
     def reindex_rag():
-        """Rebuild ChromaDB index from knowledge_base/*.md (admin/dev helper)."""
+        """Rebuild ChromaDB index from knowledge_base/*.md."""
         from app.rag.vector_store import reset_vector_store
 
         vs = reset_vector_store(force_reindex=True)

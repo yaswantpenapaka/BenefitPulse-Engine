@@ -2,31 +2,35 @@
 
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Playfair Display", Georgia, serif;
+  --font-display: "Source Serif 4", "Playfair Display", Georgia, serif;
 
-  --color-background: #070b12;
-  --color-foreground: #f3f0e8;
-  --color-card: #0d1420;
-  --color-card-foreground: #f3f0e8;
-  --color-popover: #101826;
-  --color-popover-foreground: #f3f0e8;
-  --color-primary: #c4a35a;
-  --color-primary-foreground: #0a0f18;
-  --color-secondary: #151d2c;
-  --color-secondary-foreground: #e8e2d4;
-  --color-muted: #151d2c;
-  --color-muted-foreground: #9aa3b5;
-  --color-accent: #1a2438;
-  --color-accent-foreground: #f3f0e8;
-  --color-destructive: #e85d5d;
-  --color-border: #1e2a3d;
-  --color-input: #1e2a3d;
-  --color-ring: #c4a35a;
-  --color-gold: #c4a35a;
-  --color-gold-light: #e0c878;
-  --color-navy: #0a1628;
-  --color-success: #3ecf8e;
-  --color-warning: #f0b429;
+  /* Warm multi-color system: cream · charcoal · teal · bronze */
+  --color-background: #f4f0e8;
+  --color-foreground: #1c1917;
+  --color-card: #fffcf7;
+  --color-card-foreground: #1c1917;
+  --color-popover: #fffcf7;
+  --color-popover-foreground: #1c1917;
+  --color-primary: #0f6e56;
+  --color-primary-foreground: #f7fff9;
+  --color-secondary: #ebe4d6;
+  --color-secondary-foreground: #292524;
+  --color-muted: #ebe4d6;
+  --color-muted-foreground: #6b6560;
+  --color-accent: #e7dfd0;
+  --color-accent-foreground: #1c1917;
+  --color-destructive: #c2410c;
+  --color-border: #ddd4c4;
+  --color-input: #ddd4c4;
+  --color-ring: #0f6e56;
+  --color-gold: #b45309;
+  --color-gold-light: #d97706;
+  --color-navy: #1c1917;
+  --color-teal: #0f6e56;
+  --color-bronze: #b45309;
+  --color-cream: #f4f0e8;
+  --color-success: #15803d;
+  --color-warning: #b45309;
   --radius-sm: 0.375rem;
   --radius-md: 0.5rem;
   --radius-lg: 0.75rem;
@@ -45,8 +49,9 @@ body,
 
 body {
   background:
-    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(196, 163, 90, 0.12), transparent),
-    radial-gradient(ellipse 60% 40% at 100% 0%, rgba(30, 60, 120, 0.15), transparent),
+    radial-gradient(ellipse 70% 45% at 0% 0%, rgba(15, 110, 86, 0.08), transparent 55%),
+    radial-gradient(ellipse 55% 40% at 100% 0%, rgba(180, 83, 9, 0.07), transparent 50%),
+    radial-gradient(ellipse 50% 30% at 50% 100%, rgba(28, 25, 23, 0.04), transparent),
     var(--color-background);
   color: var(--color-foreground);
   font-family: var(--font-sans);
@@ -61,22 +66,22 @@ body {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #2a3a52;
+  background: #cfc5b4;
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #3a4d6a;
+  background: #b8ad9a;
 }
 
-/* Gold shimmer for CTAs */
+/* Primary CTA — solid teal with bronze edge feel */
 .gold-gradient {
-  background: linear-gradient(135deg, #c4a35a 0%, #e0c878 50%, #b8943f 100%);
+  background: linear-gradient(135deg, #0f6e56 0%, #148f6e 55%, #0c5c47 100%);
 }
 
 .glass {
-  background: rgba(13, 20, 32, 0.75);
-  backdrop-filter: blur(16px);
-  border: 1px solid rgba(196, 163, 90, 0.12);
+  background: rgba(255, 252, 247, 0.88);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(221, 212, 196, 0.9);
 }
 
 .card-shine {
@@ -90,8 +95,30 @@ body {
   background: linear-gradient(
     125deg,
     transparent 40%,
-    rgba(196, 163, 90, 0.06) 50%,
+    rgba(255, 255, 255, 0.08) 50%,
     transparent 60%
   );
   pointer-events: none;
+}
+
+/* Physical card face variants (multi-color, not all blue) */
+.amex-card-platinum {
+  background: linear-gradient(145deg, #2a2a2c 0%, #4a4a4e 42%, #1f1f21 100%);
+  color: #f5f5f4;
+  border-color: rgba(212, 212, 216, 0.35);
+}
+.amex-card-gold {
+  background: linear-gradient(145deg, #8b6914 0%, #d4a017 45%, #6b4f0a 100%);
+  color: #1c1917;
+  border-color: rgba(180, 83, 9, 0.4);
+}
+.amex-card-green {
+  background: linear-gradient(145deg, #0c4a3a 0%, #148f6e 48%, #083d30 100%);
+  color: #ecfdf5;
+  border-color: rgba(15, 110, 86, 0.45);
+}
+.amex-card-blue-cash {
+  background: linear-gradient(145deg, #0c3d6e 0%, #1a6bb5 48%, #0a2f54 100%);
+  color: #eff6ff;
+  border-color: rgba(30, 100, 180, 0.4);
 }

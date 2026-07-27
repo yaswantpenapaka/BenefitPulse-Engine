@@ -41,22 +41,36 @@ def dashboard_summary(user_id: str = Depends(get_current_user_id)):
     benefits = store.get_benefits(user_id)
     claims = store.get_claims(user_id)
 
-    active_benefits = [b for b in benefits if b.get("status") in ("detected", "prefilled")]
+    claim_eligible = [
+        b
+        for b in benefits
+        if (b.get("status") or "").lower()
+        in ("detected", "prefilled", "submitted", "approved", "under_review")
+    ]
+    outside_coverage = [
+        b
+        for b in benefits
+        if (b.get("status") or "").lower() in ("not_eligible", "ineligible", "declined")
+        or (b.get("benefit_type") or "").lower()
+        in ("outside coverage", "no protection match", "not covered")
+    ]
     submitted = [c for c in claims if c.get("status") == "submitted"]
 
     return {
         "profile": profile,
         "cards": cards,
-        "transactions": transactions[:10],
+        "transactions": transactions[:20],
         "detected_benefits": benefits,
         "stats": {
             "cards_count": len(cards),
             "transactions_count": len(transactions),
-            "active_benefits": len(active_benefits),
+            "active_benefits": len(claim_eligible),
+            "claim_eligible": len(claim_eligible),
+            "outside_coverage": len(outside_coverage),
+            "reviewed_charges": len(claim_eligible) + len(outside_coverage),
             "submitted_claims": len(submitted),
             "potential_coverage": sum(
-                float(b.get("max_coverage_amount") or 0)
-                for b in active_benefits
+                float(b.get("max_coverage_amount") or 0) for b in claim_eligible
             ),
         },
     }

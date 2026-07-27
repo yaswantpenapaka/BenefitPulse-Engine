@@ -8,8 +8,8 @@ Return Protection helps Card Members when a merchant’s return policy is more r
 - The merchant must have refused the return, or the merchant’s return window must have expired while the Amex Return Protection window is still open.
 
 ## Eligible Cards
-- American Express Platinum Card
-- American Express Gold Card
+- The Platinum Card®
+- American Express® Gold Card
 - Select co-branded American Express Cards
 
 ## Eligible Items

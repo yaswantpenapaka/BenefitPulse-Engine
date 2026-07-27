@@ -51,9 +51,11 @@ def get_benefit(benefit_id: str, user_id: str = Depends(get_current_user_id)):
     benefit = store.get_benefit(benefit_id, user_id)
     if not benefit:
         raise HTTPException(status_code=404, detail="Benefit not found")
-    # Ensure claim draft exists
-    store.ensure_claim_for_benefit(benefit_id, user_id)
-    benefit = store.get_benefit(benefit_id, user_id)
+    status = (benefit.get("status") or "").lower()
+    # Only open claim drafts for claim-eligible coverage outcomes
+    if status not in ("not_eligible", "ineligible", "declined"):
+        store.ensure_claim_for_benefit(benefit_id, user_id)
+        benefit = store.get_benefit(benefit_id, user_id)
     return DetectedBenefitDetail(**benefit)
 
 

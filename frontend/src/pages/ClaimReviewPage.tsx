@@ -106,7 +106,7 @@ export function ClaimReviewPage() {
         <Link to="/dashboard" className="text-sm text-primary hover:underline">
           ← Back to dashboard
         </Link>
-        <div className="rounded-xl border border-destructive/40 bg-destructive/10 p-6 text-red-300">
+        <div className="rounded-xl border border-destructive/40 bg-destructive/10 p-6 text-destructive">
           {error instanceof Error ? error.message : 'Benefit not found'}
         </div>
       </div>
@@ -127,13 +127,13 @@ export function ClaimReviewPage() {
       </div>
 
       {/* Hero header */}
-      <div className="relative overflow-hidden rounded-2xl border border-primary/25 bg-gradient-to-br from-[#0c1a30] via-card to-background p-6 sm:p-8">
-        <div className="absolute -right-8 top-0 h-40 w-40 rounded-full bg-primary/15 blur-3xl" />
+      <div className="relative overflow-hidden rounded-2xl border border-border bg-card p-6 sm:p-8 shadow-sm">
+        <div className="absolute -right-8 top-0 h-40 w-40 rounded-full bg-primary/10 blur-3xl" />
         <div className="relative flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <Shield className="h-5 w-5 text-primary" />
-              <span className="text-xs uppercase tracking-[0.2em] text-primary">
+              <span className="text-xs uppercase tracking-[0.2em] text-primary font-semibold">
                 Claim Review
               </span>
             </div>
@@ -168,10 +168,10 @@ export function ClaimReviewPage() {
       </div>
 
       {isSubmitted && (
-        <div className="flex items-start gap-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4">
-          <CheckCircle2 className="h-5 w-5 text-emerald-400 shrink-0 mt-0.5" />
+        <div className="flex items-start gap-3 rounded-xl border border-emerald-300 bg-emerald-50 p-4">
+          <CheckCircle2 className="h-5 w-5 text-emerald-700 shrink-0 mt-0.5" />
           <div>
-            <div className="font-medium text-emerald-200">Claim submitted successfully</div>
+            <div className="font-medium text-emerald-900">Claim submitted successfully</div>
             <p className="text-sm text-muted-foreground mt-0.5">
               Your claim is under review. You can track status from the dashboard. Reference:{' '}
               <span className="font-mono text-xs">{claim?.id?.slice(0, 8)}…</span>
@@ -195,7 +195,7 @@ export function ClaimReviewPage() {
             </CardHeader>
             <CardContent className="grid gap-4 sm:grid-cols-2">
               <Field label="Benefit type" value={String(pref.benefit_type || benefit.benefit_type)} readOnly />
-              <Field label="Card" value={String(pref.card_name || 'Platinum Card')} readOnly />
+              <Field label="Card" value={String(pref.card_name || 'The Platinum Card®')} readOnly />
               <div className="space-y-1.5">
                 <label className="text-xs uppercase tracking-wider text-muted-foreground">Merchant</label>
                 <Input
@@ -305,7 +305,7 @@ export function ClaimReviewPage() {
                 />
               </label>
               {uploadMut.isError && (
-                <p className="text-sm text-red-300">
+                <p className="text-sm text-destructive">
                   Upload failed: {uploadMut.error instanceof Error ? uploadMut.error.message : ''}
                 </p>
               )}
@@ -356,7 +356,7 @@ export function ClaimReviewPage() {
             </div>
           )}
           {submitMut.isError && (
-            <p className="text-sm text-red-300">
+            <p className="text-sm text-destructive">
               {submitMut.error instanceof Error ? submitMut.error.message : 'Submit failed'}
             </p>
           )}

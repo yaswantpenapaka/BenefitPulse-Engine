@@ -35,8 +35,8 @@ export function SignupPage() {
     <div className="min-h-screen flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md space-y-8">
         <div className="text-center space-y-3">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-primary/40 bg-navy">
-            <Shield className="h-7 w-7 text-primary" />
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg shadow-primary/25">
+            <Shield className="h-7 w-7" />
           </div>
           <h1 className="font-[family-name:var(--font-display)] text-3xl font-bold">Create account</h1>
         </div>
@@ -44,7 +44,9 @@ export function SignupPage() {
         <Card>
           <CardHeader>
             <CardTitle>Sign up</CardTitle>
-            <CardDescription>New accounts start empty — use the demo login for seed data.</CardDescription>
+            <CardDescription>
+              Creates a Supabase Auth account and links The Platinum Card® for benefits tracking.
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={onSubmit} className="space-y-4">
@@ -73,7 +75,7 @@ export function SignupPage() {
                 />
               </div>
               {error && (
-                <div className="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-red-300">
+                <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
                   {error}
                 </div>
               )}

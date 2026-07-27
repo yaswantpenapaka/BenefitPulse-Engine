@@ -66,4 +66,4 @@ No. Food and beverages are consumables and excluded from Purchase Protection.
 Eligible durable goods bought on Amazon with an eligible Card can qualify for Purchase Protection if they meet category and exclusion rules (e.g., a laptop yes; groceries no).
 
 ## Policy Reference
-FAQ compiled from Purchase Protection Guide, Return Protection Policy, Travel Delay Insurance, Extended Warranty, and General Exclusions for prototype demonstration.
+FAQ compiled from Purchase Protection Guide, Return Protection Policy, Travel Delay Insurance, Extended Warranty, and General Exclusions.

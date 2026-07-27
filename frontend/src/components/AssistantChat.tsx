@@ -63,7 +63,7 @@ export function AssistantChat() {
       <button
         onClick={() => setOpen((o) => !o)}
         className={cn(
-          'fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full shadow-2xl transition-all',
+          'fixed bottom-20 md:bottom-6 right-4 md:right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full shadow-2xl transition-all',
           'gold-gradient text-primary-foreground hover:scale-105 hover:shadow-primary/40',
         )}
         aria-label="Open assistant"
@@ -73,9 +73,9 @@ export function AssistantChat() {
 
       {/* Panel */}
       {open && (
-        <div className="fixed bottom-24 right-6 z-50 flex h-[min(560px,70vh)] w-[min(400px,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl border border-primary/20 bg-card shadow-2xl shadow-black/50">
-          <div className="flex items-center gap-3 border-b border-border bg-navy/80 px-4 py-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/20">
+        <div className="fixed bottom-36 md:bottom-24 right-4 md:right-6 z-50 flex h-[min(560px,70vh)] w-[min(400px,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-2xl shadow-stone-900/15">
+          <div className="flex items-center gap-3 border-b border-border bg-secondary/80 px-4 py-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/15">
               <Bot className="h-5 w-5 text-primary" />
             </div>
             <div>

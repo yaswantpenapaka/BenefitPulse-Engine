@@ -1,7 +1,6 @@
 """
 Supabase-backed operational store (PostgreSQL free tier).
 
-Mirrors DemoStore methods so routers stay backend-agnostic.
 Uses service_role key for agent pipeline writes (bypasses RLS).
 """
 
@@ -16,10 +15,6 @@ from typing import Any, Optional
 from app.services.supabase_client import get_supabase_admin, get_supabase_anon
 
 logger = logging.getLogger(__name__)
-
-DEMO_EMAIL = "demo@amex.com"
-DEMO_PASSWORD = "demo1234"
-DEMO_FULL_NAME = "Priya Sharma"
 
 
 def _now() -> datetime:
@@ -61,7 +56,7 @@ class SupabaseStore:
                     "id": user.id,
                     "email": email,
                     "full_name": (user.user_metadata or {}).get("full_name")
-                    or DEMO_FULL_NAME,
+                    or email.split("@")[0],
                 }
             return {
                 "access_token": session.access_token,
@@ -98,24 +93,32 @@ class SupabaseStore:
                 ).execute()
             except Exception:
                 pass
-            # Auto-create a Platinum card for new members
+            # Auto-link starter wallet: Platinum + Gold
             try:
                 self.client.table("cards").insert(
-                    {
-                        "user_id": user.id,
-                        "card_name": "American Express Platinum",
-                        "card_type": "Platinum",
-                        "last_four": "1005",
-                        "is_active": True,
-                    }
+                    [
+                        {
+                            "user_id": user.id,
+                            "card_name": "The Platinum Card®",
+                            "card_type": "Platinum",
+                            "last_four": "1005",
+                            "is_active": True,
+                        },
+                        {
+                            "user_id": user.id,
+                            "card_name": "American Express® Gold Card",
+                            "card_type": "Gold",
+                            "last_four": "3007",
+                            "is_active": True,
+                        },
+                    ]
                 ).execute()
             except Exception:
                 pass
             if not session:
-                # Email confirm may be required — fall back message
                 raise ValueError(
                     "Account created. If login fails, disable email confirmation "
-                    "in Supabase Auth settings for local demo, then try again."
+                    "in Supabase Auth settings (or confirm the email), then try again."
                 )
             return {
                 "access_token": session.access_token,
@@ -132,9 +135,6 @@ class SupabaseStore:
             return None
         if token.startswith("Bearer "):
             token = token[7:]
-        # Demo token compatibility when dual-mode
-        if token.startswith("demo-token-"):
-            return token.replace("demo-token-", "", 1)
         try:
             from app.config import get_settings
             import jwt
@@ -341,6 +341,15 @@ class SupabaseStore:
         benefit = self.get_benefit(benefit_id, user_id)
         if not benefit:
             return None
+        # Outside-coverage outcomes are not claimable
+        if (benefit.get("status") or "").lower() in ("not_eligible", "ineligible", "declined"):
+            return None
+        if (benefit.get("benefit_type") or "").lower() in (
+            "outside coverage",
+            "no protection match",
+            "not covered",
+        ):
+            return None
         txn = benefit.get("transaction") or self.get_transaction(benefit["transaction_id"])
         if not txn:
             return None
@@ -352,7 +361,7 @@ class SupabaseStore:
             "currency": txn.get("currency", "INR"),
             "transaction_date": txn["transaction_date"],
             "transaction_id": txn["id"],
-            "card_name": "American Express Platinum",
+            "card_name": "The Platinum Card®",
             "category": txn.get("category"),
             "item_description": txn.get("description"),
             "coverage_window_days": window,
@@ -413,18 +422,43 @@ class SupabaseStore:
         transaction: dict,
         pipeline: dict,
     ) -> Optional[dict]:
-        status = pipeline.get("status") or ""
+        """Persist agent outcome for a charge — both claim-eligible and outside-coverage."""
         rules = pipeline.get("rules_decision") or {}
-        if status in ("not_eligible",) or not rules.get("eligible"):
-            return None
+        pipeline_status = (pipeline.get("status") or "").lower()
+        eligible = bool(rules.get("eligible")) and pipeline_status not in (
+            "not_eligible",
+            "ineligible",
+        )
 
         pref = pipeline.get("prefilled_claim") or {}
         conf = pipeline.get("confidence_score")
-        explanation = pipeline.get("explanation") or pref.get("explanation")
-        benefit_type = rules.get("benefit") or pref.get("benefit_type") or "Purchase Protection"
         intel = pipeline.get("transaction_intelligence") or {}
+        reasons = rules.get("reasons") or []
+        explanation = (
+            pipeline.get("explanation")
+            or pref.get("explanation")
+            or ("; ".join(reasons) if reasons else None)
+        )
 
-        # Update transaction normalization
+        if eligible:
+            benefit_type = (
+                rules.get("benefit") or pref.get("benefit_type") or "Purchase Protection"
+            )
+            benefit_status = "prefilled" if pref else "detected"
+            conf = conf if conf is not None else 0.75
+        else:
+            # Finance wording: no open claim path for this charge
+            benefit_type = "Outside coverage"
+            benefit_status = "not_eligible"
+            conf = conf if conf is not None else 0.15
+            if not explanation:
+                explanation = (
+                    "This charge does not qualify for card purchase protections, "
+                    "return protection, travel delay cover, or extended warranty under "
+                    "current policy rules."
+                )
+
+        # Update transaction normalization from intelligence
         txn_updates = {}
         if intel.get("merchant_normalized"):
             txn_updates["merchant_normalized"] = intel["merchant_normalized"]
@@ -437,7 +471,6 @@ class SupabaseStore:
                 "id", transaction["id"]
             ).execute()
 
-        # Upsert benefit for this transaction
         existing = (
             self.client.table("detected_benefits")
             .select("*")
@@ -452,15 +485,22 @@ class SupabaseStore:
             "user_id": user_id,
             "benefit_type": benefit_type,
             "confidence_score": conf,
-            "status": "prefilled" if pref else "detected",
+            "status": benefit_status,
             "explanation": explanation,
-            "policy_reference": rules.get("policy_reference") or pref.get("policy_reference"),
+            "policy_reference": rules.get("policy_reference")
+            or pref.get("policy_reference")
+            or ("General Exclusions" if not eligible else None),
             "coverage_window_days": rules.get("coverage_window_days")
             or pref.get("coverage_window_days"),
-            "max_coverage_amount": rules.get("max_coverage") or pref.get("max_coverage_amount"),
+            "max_coverage_amount": (
+                (rules.get("max_coverage") or pref.get("max_coverage_amount"))
+                if eligible
+                else 0
+            ),
             "confidence_breakdown": pipeline.get("confidence_breakdown"),
         }
 
+        claim = None
         if existing_rows:
             bid = existing_rows[0]["id"]
             self.client.table("detected_benefits").update(benefit_payload).eq(
@@ -468,51 +508,58 @@ class SupabaseStore:
             ).execute()
             benefit = {**existing_rows[0], **benefit_payload, "id": bid}
             claim_existing = self.get_claim_by_benefit(bid)
-            missing = pipeline.get("missing_documents") or ["receipt_photo"]
-            if claim_existing and claim_existing.get("status") == "draft":
-                self.client.table("claims").update(
-                    {
-                        "prefilled_data": pref or claim_existing.get("prefilled_data"),
+            if eligible:
+                missing = pipeline.get("missing_documents") or ["receipt_photo"]
+                if claim_existing and claim_existing.get("status") == "draft":
+                    self.client.table("claims").update(
+                        {
+                            "prefilled_data": pref or claim_existing.get("prefilled_data"),
+                            "missing_documents": missing,
+                        }
+                    ).eq("id", claim_existing["id"]).execute()
+                    claim = self.get_claim(claim_existing["id"])
+                elif not claim_existing:
+                    claim = {
+                        "id": _uid(),
+                        "detected_benefit_id": bid,
+                        "user_id": user_id,
+                        "status": "draft",
+                        "prefilled_data": pref,
                         "missing_documents": missing,
                     }
-                ).eq("id", claim_existing["id"]).execute()
-                claim = self.get_claim(claim_existing["id"])
-            elif not claim_existing:
-                claim = {
-                    "id": _uid(),
-                    "detected_benefit_id": bid,
-                    "user_id": user_id,
-                    "status": "draft",
-                    "prefilled_data": pref,
-                    "missing_documents": missing,
-                }
-                self.client.table("claims").insert(claim).execute()
-            else:
+                    self.client.table("claims").insert(claim).execute()
+                else:
+                    claim = claim_existing
+            # If now not eligible, leave any prior claim as-is (do not open new claim)
+            elif claim_existing:
                 claim = claim_existing
         else:
             bid = _uid()
             benefit_payload["id"] = bid
             self.client.table("detected_benefits").insert(benefit_payload).execute()
             benefit = benefit_payload
-            claim = {
-                "id": _uid(),
-                "detected_benefit_id": bid,
-                "user_id": user_id,
-                "status": "draft",
-                "prefilled_data": pref
-                or {
-                    "benefit_type": benefit_type,
-                    "merchant": intel.get("merchant_normalized")
-                    or transaction.get("merchant_raw"),
-                    "amount": transaction.get("amount"),
-                    "explanation": explanation,
-                },
-                "missing_documents": pipeline.get("missing_documents") or ["receipt_photo"],
-            }
-            self.client.table("claims").insert(claim).execute()
+            if eligible:
+                claim = {
+                    "id": _uid(),
+                    "detected_benefit_id": bid,
+                    "user_id": user_id,
+                    "status": "draft",
+                    "prefilled_data": pref
+                    or {
+                        "benefit_type": benefit_type,
+                        "merchant": intel.get("merchant_normalized")
+                        or transaction.get("merchant_raw"),
+                        "amount": transaction.get("amount"),
+                        "explanation": explanation,
+                    },
+                    "missing_documents": pipeline.get("missing_documents")
+                    or ["receipt_photo"],
+                }
+                self.client.table("claims").insert(claim).execute()
 
         result = deepcopy(benefit)
         result["claim"] = deepcopy(claim) if claim else None
+        result["eligible"] = eligible
         return result
 
 

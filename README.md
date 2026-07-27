@@ -2,34 +2,51 @@
 
 **BenefitPulse** watches card transactions, flags unused protections (purchase protection, return protection, travel delay, extended warranty), scores eligibility, pre-fills claims, and answers policy questions through a RAG-backed chat assistant.
 
-This repo is a working **prototype** — local demo mode out of the box, optional free-tier cloud (Gemini + Supabase) when you want live agents and Postgres.
+This prototype runs **only** with **Supabase** (Postgres + Auth) and a **Google Gemini API key**. There is no offline / local-JSON demo mode.
 
 ```
-Transaction → Transaction Intelligence → Benefit Knowledge (RAG)
+Transaction → Transaction Intelligence → Benefit Knowledge (ChromaDB RAG)
            → Rules Engine → Confidence → Claim Prefill → UI + Assistant
 ```
 
 ---
 
-## What’s in the box
+## Stack
 
-| Layer | Stack |
-|--------|--------|
+| Layer | Technology |
+|--------|------------|
 | Frontend | React 19, Vite, TypeScript, Tailwind CSS |
 | Backend | FastAPI (Python 3.11+) |
-| Agents | LangGraph multi-agent pipeline |
-| RAG | ChromaDB + 6 policy markdown docs |
-| LLM | Google Gemini (free tier) with rule fallback |
-| Data | Local JSON demo store **or** Supabase Postgres |
-| Auth | Demo tokens **or** Supabase Auth |
+| Agents | LangGraph multi-agent pipeline + Google Gemini |
+| RAG | ChromaDB + Gemini embeddings over 6 policy markdown files |
+| Database | Supabase PostgreSQL |
+| Auth | Supabase Auth |
 
-**Happy path:** Sign in → Dashboard (detections) → Claim review (pre-filled) → Submit → Ask the assistant.
+**Happy path:** Sign in → Overview → Benefits / Transactions / Simulate → Claim review → Submit → Ask the assistant.
 
 ---
 
-## Quick start (demo mode — no cloud keys)
+## Prerequisites
 
-### 1. Backend
+1. **Python** 3.11+ and **Node.js** 20+
+2. **Google Gemini API key** — [Google AI Studio](https://aistudio.google.com/apikey)
+3. **Supabase project** — [supabase.com](https://supabase.com)
+
+Without `GOOGLE_API_KEY` and all `SUPABASE_*` variables, the backend **refuses to start**.
+
+---
+
+## Setup
+
+### 1. Supabase schema
+
+1. Create a free Supabase project.
+2. SQL Editor → run the full file `supabase/schema.sql`.
+3. Authentication → Providers → Email enabled.
+4. Authentication → Settings → turn **off** “Confirm email” for local development (or confirm emails manually).
+5. Project Settings → API → copy URL, anon key, service role key, and JWT secret.
+
+### 2. Backend env
 
 ```bash
 cd backend
@@ -43,14 +60,60 @@ python -m venv .venv
 
 pip install -r requirements.txt
 copy .env.example .env    # Unix: cp .env.example .env
+```
 
+Edit `backend/.env` (required fields):
+
+```env
+GOOGLE_API_KEY=your_gemini_key
+GEMINI_MODEL=gemini-2.5-flash
+EMBEDDING_MODEL=models/gemini-embedding-001
+
+SUPABASE_URL=https://xxxx.supabase.co
+SUPABASE_ANON_KEY=eyJ...
+SUPABASE_SERVICE_ROLE_KEY=eyJ...
+SUPABASE_JWT_SECRET=your-jwt-secret
+
+CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
+```
+
+### 3. Seed sample data (optional but recommended)
+
+```bash
+cd backend
+python scripts/seed_supabase.py
+```
+
+Creates a sample member with The Platinum Card® and a few transactions:
+
+| Field | Value |
+|--------|--------|
+| Email | `demo@amex.com` |
+| Password | `demo1234` |
+
+You can also sign up a new account in the UI (gets a Platinum card automatically).
+
+### 4. Build / refresh ChromaDB index
+
+```bash
+cd backend
+python scripts/reindex_chroma.py
+```
+
+Uses Gemini embeddings. First run may take a minute.
+
+### 5. Start API
+
+```bash
+cd backend
 uvicorn app.main:app --reload --port 8000
 ```
 
 - API docs: http://localhost:8000/docs  
 - Health: http://localhost:8000/health  
+- Stack status: http://localhost:8000/api/system/status  
 
-### 2. Frontend
+### 6. Frontend
 
 ```bash
 cd frontend
@@ -58,67 +121,7 @@ npm install
 npm run dev
 ```
 
-App: http://localhost:5173
-
-### 3. Demo login
-
-| Field | Value |
-|--------|--------|
-| Email | `demo@amex.com` |
-| Password | `demo1234` |
-
-Seed data: one Platinum card, sample transactions, detected benefits, and draft claims.
-
----
-
-## Optional: live Gemini + Supabase
-
-### Gemini (live agents + better RAG)
-
-1. Create a key at [Google AI Studio](https://aistudio.google.com/apikey).
-2. Put it in `backend/.env`:
-
-```env
-GOOGLE_API_KEY=your_key_here
-GEMINI_MODEL=gemini-2.5-flash
-EMBEDDING_MODEL=models/gemini-embedding-001
-```
-
-3. Rebuild the vector index (once, or after policy edits):
-
-```bash
-cd backend
-python scripts/reindex_chroma.py
-```
-
-Without a key the pipeline still runs using **rule-based fallbacks**.
-
-### Supabase (cloud Postgres + Auth)
-
-1. Create a free project at [supabase.com](https://supabase.com).
-2. SQL Editor → run `supabase/schema.sql`.
-3. Auth → Email enabled; for local demos, turn off “Confirm email”.
-4. Project Settings → API → fill `backend/.env`:
-
-```env
-SUPABASE_URL=https://xxxx.supabase.co
-SUPABASE_ANON_KEY=eyJ...
-SUPABASE_SERVICE_ROLE_KEY=eyJ...
-SUPABASE_JWT_SECRET=your-jwt-secret
-DEMO_MODE=false
-DATA_BACKEND=supabase
-```
-
-5. Seed the demo user and data:
-
-```bash
-cd backend
-python scripts/seed_supabase.py
-```
-
-6. Restart the backend. Check status: http://localhost:8000/api/system/status
-
-> `DEMO_MODE=true` keeps data on local JSON but can still use Gemini + ChromaDB.
+App: http://localhost:5173  
 
 Copy `frontend/.env.example` → `frontend/.env` only if the API is not on `localhost:8000` (Vite proxies by default).
 
@@ -127,9 +130,8 @@ Copy `frontend/.env.example` → `frontend/.env` only if the API is not on `loca
 ## Project layout
 
 ```
-BenefitPulse-Engine/
+card-benefit-activation-engine/
 ├── frontend/                 # React + Vite UI
-│   ├── public/               # favicon, robots.txt
 │   └── src/                  # pages, components, API client
 ├── backend/
 │   ├── app/
@@ -137,14 +139,14 @@ BenefitPulse-Engine/
 │   │   ├── rag/              # ChromaDB vector store
 │   │   ├── routers/          # FastAPI routes
 │   │   ├── models/           # Pydantic schemas
-│   │   ├── services/         # demo store, auth, Supabase
+│   │   ├── services/         # Supabase store, auth, clients
 │   │   └── main.py
 │   ├── knowledge_base/       # policy markdown for RAG
 │   ├── scripts/              # reindex, seed, probes
+│   ├── .env.example
 │   └── requirements.txt
 ├── supabase/
 │   └── schema.sql
-├── .gitignore
 └── README.md
 ```
 
@@ -159,8 +161,8 @@ Transaction Intelligence → Benefit Knowledge (RAG) → Rules Engine
 
 | Agent | Job |
 |--------|-----|
-| Transaction Intelligence | Normalize merchant, category, product type |
-| Benefit Knowledge | Pull policy chunks + candidate benefits |
+| Transaction Intelligence | Normalize merchant, category, product type (Gemini) |
+| Benefit Knowledge | Pull policy chunks from ChromaDB + candidate benefits |
 | Rules Evaluation | Deterministic eligible / not eligible |
 | Confidence | Weighted score + breakdown |
 | Claim Prefill | Near-complete claim + short explanation |
@@ -174,8 +176,8 @@ Live detect: `POST /api/benefits/detect/{transaction_id}`
 
 | Method | Path | Description |
 |--------|------|-------------|
-| POST | `/api/auth/login` | Login |
-| POST | `/api/auth/signup` | Signup |
+| POST | `/api/auth/login` | Login (Supabase Auth) |
+| POST | `/api/auth/signup` | Signup (Supabase Auth) |
 | GET | `/api/dashboard` | Aggregate dashboard |
 | GET | `/api/benefits` | Detected benefits |
 | GET | `/api/benefits/{id}` | Benefit + claim detail |
@@ -197,7 +199,7 @@ Under `backend/knowledge_base/`:
 5. `general_exclusions.md`
 6. `faq_benefits.md`
 
-Indexed into ChromaDB at startup (keyword fallback if embeddings are unavailable).
+Indexed into ChromaDB at startup with Gemini embeddings.
 
 ---
 
@@ -205,16 +207,20 @@ Indexed into ChromaDB at startup (keyword fallback if embeddings are unavailable
 
 See `backend/.env.example` and `frontend/.env.example`. **Never commit real keys** — `.env` files are gitignored.
 
----
+| Variable | Required | Purpose |
+|----------|----------|---------|
+| `GOOGLE_API_KEY` | Yes | Gemini agents + embeddings |
+| `SUPABASE_URL` | Yes | Project URL |
+| `SUPABASE_ANON_KEY` | Yes | Client auth |
+| `SUPABASE_SERVICE_ROLE_KEY` | Yes | Server writes (bypass RLS) |
+| `SUPABASE_JWT_SECRET` | Yes | Token validation |
+| `GEMINI_MODEL` | No | Default `gemini-2.5-flash` |
+| `EMBEDDING_MODEL` | No | Default `models/gemini-embedding-001` |
 
-## Requirements
-
-- **Python** 3.11+
-- **Node.js** 20+ (or recent LTS)
-- Optional: Google AI Studio key, Supabase free project
+More detail: [SETUP_CLOUD.md](./SETUP_CLOUD.md).
 
 ---
 
 ## License
 
-Prototype for educational / demo use. Not an official product of any card network.
+Prototype for educational use. Not an official product of any card network.

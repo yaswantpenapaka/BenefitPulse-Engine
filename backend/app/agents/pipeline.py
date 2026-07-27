@@ -19,8 +19,24 @@ from app.rag.vector_store import get_vector_store
 
 logger = logging.getLogger(__name__)
 
-# Tracks whether Gemini LLM calls succeeded during a pipeline run (for demo UI).
+# Tracks whether Gemini LLM calls succeeded during a pipeline run (UI status).
 _llm_stats: dict[str, int] = {"attempted": 0, "succeeded": 0}
+
+# Display names aligned with americanexpress.com consumer product naming
+OFFICIAL_CARD_NAMES: dict[str, str] = {
+    "Platinum": "The Platinum Card®",
+    "Gold": "American Express® Gold Card",
+    "Green": "American Express® Green Card",
+    "Centurion": "Centurion® Card from American Express",
+    "Blue Cash Preferred": "Blue Cash Preferred® Card",
+    "Blue Cash Everyday": "Blue Cash Everyday® Card",
+    "Business Platinum": "Business Platinum Card®",
+}
+
+
+def _official_card_name(card_tier: str | None) -> str:
+    tier = (card_tier or "Platinum").strip()
+    return OFFICIAL_CARD_NAMES.get(tier, OFFICIAL_CARD_NAMES.get(tier.title(), f"American Express® {tier}"))
 
 
 class BenefitActivationState(TypedDict, total=False):
@@ -303,7 +319,7 @@ def rules_evaluation_node(state: BenefitActivationState) -> dict:
 
     eligible_tiers = {"Platinum", "Gold", "Centurion"}
     if card_tier not in eligible_tiers and card_tier != "Platinum":
-        # Still allow for prototype demo cards
+        # Allow eligible consumer tiers
         reasons.append(f"Card tier {card_tier} – verifying eligibility")
     else:
         reasons.append(f"Card tier {card_tier} is eligible")
@@ -451,7 +467,7 @@ def claim_prefill_node(state: BenefitActivationState) -> dict:
         "currency": txn.get("currency", "INR"),
         "transaction_date": txn.get("transaction_date"),
         "transaction_id": txn.get("id"),
-        "card_name": f"American Express {card_tier}",
+        "card_name": _official_card_name(card_tier),
         "card_type": card_tier,
         "category": intel.get("category"),
         "item_description": intel.get("product_type") or txn.get("description"),
@@ -583,9 +599,9 @@ def run_detection_pipeline(
     else:
         result = _run_sequential(initial)
 
-    # Attach runtime metadata for the live demo UI
+    # Attach runtime metadata for the UI
     result["_mode"] = (  # type: ignore[typeddict-item]
-        "gemini_live" if _llm_stats["succeeded"] > 0 else "rule_fallback"
+        "gemini_live" if _llm_stats["succeeded"] > 0 else "rules_engine"
     )
     result["_llm"] = {  # type: ignore[typeddict-item]
         "gemini_configured": settings.has_gemini,

@@ -40,23 +40,6 @@ export function ProfilePage() {
           </div>
         </CardContent>
       </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">About this build</CardTitle>
-        </CardHeader>
-        <CardContent className="text-sm text-muted-foreground space-y-2">
-          <p>
-            You&apos;re on <strong className="text-foreground">demo mode</strong> — local JSON for
-            data. Drop in a Gemini key and Supabase credentials when you want cloud auth, Postgres,
-            and live LLM reasoning.
-          </p>
-          <p>
-            Seed user: <code className="text-primary">demo@amex.com</code> /{' '}
-            <code className="text-primary">demo1234</code>
-          </p>
-        </CardContent>
-      </Card>
     </div>
   )
 }

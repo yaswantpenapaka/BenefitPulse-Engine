@@ -1,9 +1,7 @@
 """
-Unified data store facade.
+Unified data store facade — Supabase PostgreSQL only.
 
-- demo: local JSON (always available, great for offline demos)
-- supabase: cloud Postgres free tier (production-like)
-- hybrid: demo primary + optional agent_run sync to Supabase
+The app refuses to start without Supabase + Gemini credentials (see config.validate_required).
 """
 
 from __future__ import annotations
@@ -12,7 +10,6 @@ import logging
 from typing import Any, Protocol, runtime_checkable
 
 from app.config import get_settings
-from app.services.demo_store import get_demo_store
 from app.services.supabase_client import log_agent_run
 
 logger = logging.getLogger(__name__)
@@ -53,29 +50,26 @@ def get_store_kind() -> str:
 
 
 def get_store() -> Any:
-    """Return the active operational store (demo or supabase)."""
+    """Return the Supabase operational store. Raises if not configured."""
     global _store, _store_kind
     if _store is not None:
         return _store
 
     settings = get_settings()
-    if settings.use_supabase_primary:
-        try:
-            from app.services.supabase_store import get_supabase_store
+    settings.validate_required()
 
-            _store = get_supabase_store()
-            _store_kind = "supabase"
-            logger.info("Data backend: Supabase (cloud Postgres)")
-            return _store
-        except Exception as e:
-            logger.warning(
-                "Supabase primary failed (%s) — falling back to demo store", e
-            )
+    try:
+        from app.services.supabase_store import get_supabase_store
 
-    _store = get_demo_store()
-    _store_kind = "demo"
-    logger.info("Data backend: demo (local JSON)")
-    return _store
+        _store = get_supabase_store()
+        _store_kind = "supabase"
+        logger.info("Data backend: Supabase (PostgreSQL + Auth)")
+        return _store
+    except Exception as e:
+        logger.error("Supabase store failed to initialize: %s", e)
+        raise RuntimeError(
+            f"Could not connect to Supabase. Check SUPABASE_* credentials. Detail: {e}"
+        ) from e
 
 
 def reset_store() -> None:
@@ -89,9 +83,9 @@ def persist_pipeline_audit(
     transaction: dict,
     pipeline: dict,
 ) -> None:
-    """Sync & audit path from architecture diagram (best-effort cloud log)."""
+    """Best-effort audit log into Supabase agent_runs."""
     settings = get_settings()
-    if not settings.has_supabase or not settings.supabase_sync:
+    if not settings.supabase_sync:
         return
     log_agent_run(
         user_id=user_id,
@@ -108,19 +102,12 @@ def system_status() -> dict[str, Any]:
 
     vs = get_vector_store()
     rag = vs.status()
-    sb = supabase_health() if settings.has_supabase else {
-        "configured": False,
-        "reachable": False,
-    }
+    sb = supabase_health()
 
     return {
         "app": settings.app_name,
         "env": settings.app_env,
-        "demo_mode": settings.demo_mode,
-        "data_backend": get_store_kind() if _store is not None else (
-            "supabase" if settings.use_supabase_primary else "demo"
-        ),
-        "use_supabase_primary": settings.use_supabase_primary,
+        "data_backend": "supabase",
         "gemini": {
             "configured": settings.has_gemini,
             "model": settings.gemini_model if settings.has_gemini else None,
@@ -136,8 +123,9 @@ def system_status() -> dict[str, Any]:
                 "Confidence",
                 "Claim Prefill",
             ],
-            "knowledge": "markdown policies → ChromaDB → agents",
-            "operational_db": "Supabase PostgreSQL" if settings.use_supabase_primary else "local demo_store.json",
-            "llm": "Google Gemini free tier" if settings.has_gemini else "rule fallback",
+            "knowledge": "markdown policies → Gemini embeddings → ChromaDB → agents",
+            "operational_db": "Supabase PostgreSQL",
+            "auth": "Supabase Auth",
+            "llm": "Google Gemini",
         },
     }

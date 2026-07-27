@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, Navigate, useNavigate } from 'react-router-dom'
-import { Shield, Sparkles } from 'lucide-react'
+import { Shield } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -9,8 +9,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 export function LoginPage() {
   const { login, isAuthenticated } = useAuth()
   const navigate = useNavigate()
-  const [email, setEmail] = useState('demo@amex.com')
-  const [password, setPassword] = useState('demo1234')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -34,8 +34,8 @@ export function LoginPage() {
     <div className="min-h-screen flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md space-y-8">
         <header className="text-center space-y-3">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-primary/40 bg-navy shadow-lg shadow-primary/10">
-            <Shield className="h-7 w-7 text-primary" aria-hidden />
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg shadow-primary/25">
+            <Shield className="h-7 w-7" aria-hidden />
           </div>
           <h1 className="font-[family-name:var(--font-display)] text-3xl font-bold tracking-tight">
             BenefitPulse
@@ -49,7 +49,7 @@ export function LoginPage() {
           <CardHeader>
             <CardTitle>Sign in</CardTitle>
             <CardDescription>
-              Demo account is already filled in — hit Sign in to walk the full flow.
+              Use your Supabase-backed BenefitPulse account.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -64,6 +64,7 @@ export function LoginPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   autoComplete="email"
+                  placeholder="you@example.com"
                 />
               </div>
               <div className="space-y-2">
@@ -79,7 +80,7 @@ export function LoginPage() {
                 />
               </div>
               {error && (
-                <div className="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-red-300">
+                <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
                   {error}
                 </div>
               )}
@@ -87,15 +88,6 @@ export function LoginPage() {
                 {loading ? 'Signing in…' : 'Sign in'}
               </Button>
             </form>
-
-            <div className="mt-4 flex items-start gap-2 rounded-lg border border-primary/20 bg-primary/5 p-3 text-xs text-muted-foreground">
-              <Sparkles className="h-4 w-4 text-primary shrink-0 mt-0.5" aria-hidden />
-              <div>
-                <strong className="text-foreground">Demo login</strong>
-                <br />
-                demo@amex.com / demo1234 — Platinum card, sample transactions, and a few detections.
-              </div>
-            </div>
 
             <p className="mt-6 text-center text-sm text-muted-foreground">
               No account?{' '}
